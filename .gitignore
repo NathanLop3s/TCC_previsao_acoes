@@ -1,0 +1,26 @@
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+*.egg-info/
+
+# Dados e resultados gerados (reproduzíveis rodando o pipeline)
+data/raw/*.parquet
+data/processed/*.parquet
+results/*.png
+results/*.csv
+resultados.db
+
+# IDE
+.vscode/
+.idea/
+
+# SO
+.DS_Store
+Thumbs.db
