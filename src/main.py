@@ -34,7 +34,7 @@ def main() -> None:
         janela_sma_longa=config.JANELA_SMA_LONGA,
         janela_rsi=config.JANELA_RSI,
         proporcao_treino=config.PROPORCAO_TREINO,
-        seed=config.SEED,
+        seeds=config.SEEDS,
         caminho_banco=config.BANCO_RESULTADOS,
         pasta_resultados=config.RESULTADOS,
     )
@@ -46,18 +46,19 @@ def main() -> None:
         df_resultados, config.RESULTADOS / "comparacao_rmse.png"
     )
 
-    print("\n=== Resumo dos experimentos (ordenado por RMSE) ===")
+    print("\n=== Resumo dos experimentos (ordenado por RMSE médio) ===")
     print(
-        df_resultados.sort_values("rmse")[
-            ["janela_temporal", "arquitetura", "rmse", "r2"]
+        df_resultados.sort_values("rmse_medio")[
+            ["janela_temporal", "arquitetura", "rmse_medio", "rmse_desvio", "r2_medio"]
         ].to_string(index=False)
     )
 
-    melhor = df_resultados.sort_values("rmse").iloc[0]
+    melhor = df_resultados.sort_values("rmse_medio").iloc[0]
     print(
         f"\nMelhor configuração: janela={melhor['janela_temporal']} dias, "
-        f"arquitetura={melhor['arquitetura']} (RMSE={melhor['rmse']:.4f}, "
-        f"R²={melhor['r2']:.4f})"
+        f"arquitetura={melhor['arquitetura']} "
+        f"(RMSE médio={melhor['rmse_medio']:.4f} ± {melhor['rmse_desvio']:.4f}, "
+        f"R² médio={melhor['r2_medio']:.4f})"
     )
     print(f"\nResultados completos salvos em: {config.BANCO_RESULTADOS}")
     print(f"CSV resumo salvo em: {caminho_csv}")

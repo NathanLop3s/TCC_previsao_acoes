@@ -30,18 +30,24 @@ def plotar_previsto_vs_real(
     plt.savefig(caminho_saida, dpi=120)
     plt.close()
 
-
 def plotar_comparacao_configuracoes(
     df_resultados: pd.DataFrame, caminho_saida: Path
 ) -> None:
-    pivot = df_resultados.pivot(
-        index="arquitetura", columns="janela_temporal", values="rmse"
+    pivot_media = df_resultados.pivot(
+        index="arquitetura", columns="janela_temporal", values="rmse_medio"
+    )
+    pivot_desvio = df_resultados.pivot(
+        index="arquitetura", columns="janela_temporal", values="rmse_desvio"
     )
 
-    ax = pivot.plot(kind="bar", figsize=(10, 5))
-    ax.set_title("RMSE por arquitetura e tamanho de janela temporal")
+    ax = pivot_media.plot(
+        kind="bar", yerr=pivot_desvio, capsize=4, figsize=(10, 5)
+    )
+    ax.set_title(
+        "RMSE médio por arquitetura e janela temporal (± desvio padrão entre seeds)"
+    )
     ax.set_xlabel("Arquitetura da MLP")
-    ax.set_ylabel("RMSE")
+    ax.set_ylabel("RMSE médio")
     ax.legend(title="Janela temporal (dias)")
     plt.xticks(rotation=20, ha="right")
     plt.tight_layout()

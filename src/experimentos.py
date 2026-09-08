@@ -1,6 +1,7 @@
 import sqlite3
 import time
 from pathlib import Path
+import numpy as np
 
 import pandas as pd
 
@@ -19,6 +20,7 @@ def criar_tabela_resultados(caminho_banco: Path) -> None:
             janela_temporal INTEGER,
             arquitetura TEXT,
             camadas TEXT,
+            seed INTEGER,
             rmse REAL,
             r2 REAL,
             n_amostras_treino INTEGER,
@@ -36,15 +38,16 @@ def registrar_resultado(caminho_banco: Path, resultado: dict) -> None:
     conexao.execute(
         """
         INSERT INTO experimentos
-            (ticker, janela_temporal, arquitetura, camadas, rmse, r2,
+            (ticker, janela_temporal, arquitetura, camadas, seed, rmse, r2,
              n_amostras_treino, n_amostras_teste, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             resultado["ticker"],
             resultado["janela_temporal"],
             resultado["arquitetura"],
             str(resultado["camadas"]),
+            resultado["seed"],
             resultado["rmse"],
             resultado["r2"],
             resultado["n_amostras_treino"],
@@ -65,7 +68,7 @@ def rodar_grade_experimentos(
     janela_sma_longa: int,
     janela_rsi: int,
     proporcao_treino: float,
-    seed: int,
+    seeds: list,
     caminho_banco: Path,
     pasta_resultados: Path,
     salvar_grafico_melhor: bool = True,
@@ -93,39 +96,72 @@ def rodar_grade_experimentos(
             contador += 1
             print(
                 f"[{contador}/{total}] janela={tamanho_janela} dias | "
-                f"arquitetura={nome_arquitetura} {camadas}"
+                f"arquitetura={nome_arquitetura} {camadas} "
+                f"({len(seeds)} seeds)"
             )
 
-            modelo = criar_mlp(hidden_layer_sizes=camadas, seed=seed)
-            modelo.fit(dataset["X_treino"], dataset["y_treino"])
+            execucoes = []
 
-            previsao_norm = modelo.predict(dataset["X_teste"])
-            previsao = dataset["scaler_y"].inverse_transform(
-                previsao_norm.reshape(-1, 1)
-            ).ravel()
+            for seed in seeds:
+                modelo = criar_mlp(hidden_layer_sizes=camadas, seed=seed)
+                modelo.fit(dataset["X_treino"], dataset["y_treino"])
 
-            metricas = calcular_metricas(dataset["y_teste_original"], previsao)
+                previsao_norm = modelo.predict(dataset["X_teste"])
+                previsao = dataset["scaler_y"].inverse_transform(
+                    previsao_norm.reshape(-1, 1)
+                ).ravel()
 
-            resultado = {
+                metricas = calcular_metricas(dataset["y_teste_original"], previsao)
+
+                registrar_resultado(caminho_banco, {
+                    "ticker": ticker,
+                    "janela_temporal": tamanho_janela,
+                    "arquitetura": nome_arquitetura,
+                    "camadas": camadas,
+                    "seed": seed,
+                    "rmse": metricas["rmse"],
+                    "r2": metricas["r2"],
+                    "n_amostras_treino": len(dataset["X_treino"]),
+                    "n_amostras_teste": len(dataset["X_teste"]),
+                })
+
+                execucoes.append({
+                    "seed": seed,
+                    "rmse": metricas["rmse"],
+                    "r2": metricas["r2"],
+                    "y_previsto": previsao,
+                })
+
+            rmses = [e["rmse"] for e in execucoes]
+            r2s = [e["r2"] for e in execucoes]
+            rmse_medio = float(np.mean(rmses))
+            rmse_desvio = float(np.std(rmses))
+            r2_medio = float(np.mean(r2s))
+            r2_desvio = float(np.std(r2s))
+
+            resumo = {
                 "ticker": ticker,
                 "janela_temporal": tamanho_janela,
                 "arquitetura": nome_arquitetura,
                 "camadas": camadas,
-                "rmse": metricas["rmse"],
-                "r2": metricas["r2"],
-                "n_amostras_treino": len(dataset["X_treino"]),
-                "n_amostras_teste": len(dataset["X_teste"]),
+                "rmse_medio": rmse_medio,
+                "rmse_desvio": rmse_desvio,
+                "r2_medio": r2_medio,
+                "r2_desvio": r2_desvio,
+                "n_seeds": len(seeds),
             }
-            registrar_resultado(caminho_banco, resultado)
-            linhas_resultado.append(resultado)
+            linhas_resultado.append(resumo)
 
-            if metricas["rmse"] < melhor_rmse:
-                melhor_rmse = metricas["rmse"]
+            if rmse_medio < melhor_rmse:
+                melhor_rmse = rmse_medio
+                execucao_tipica = min(
+                    execucoes, key=lambda e: abs(e["rmse"] - rmse_medio)
+                )
                 melhor_config = {
-                    **resultado,
+                    **resumo,
                     "datas_teste": dataset["datas_teste"],
                     "y_real": dataset["y_teste_original"],
-                    "y_previsto": previsao,
+                    "y_previsto": execucao_tipica["y_previsto"],
                 }
 
     if salvar_grafico_melhor and melhor_config is not None:
@@ -134,8 +170,9 @@ def rodar_grade_experimentos(
             y_real=melhor_config["y_real"],
             y_previsto=melhor_config["y_previsto"],
             titulo=(
-                f"{ticker} -- melhor config: janela={melhor_config['janela_temporal']}d, "
-                f"{melhor_config['arquitetura']} (RMSE={melhor_config['rmse']:.3f})"
+                f"{ticker} -- melhor config (média): janela={melhor_config['janela_temporal']}d, "
+                f"{melhor_config['arquitetura']} "
+                f"(RMSE={melhor_config['rmse_medio']:.3f} ± {melhor_config['rmse_desvio']:.3f})"
             ),
             caminho_saida=pasta_resultados / "melhor_modelo_previsto_vs_real.png",
         )
