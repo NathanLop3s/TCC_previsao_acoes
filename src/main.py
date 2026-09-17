@@ -60,9 +60,6 @@ def main() -> None:
         f"(RMSE médio={melhor['rmse_medio']:.4f} ± {melhor['rmse_desvio']:.4f}, "
         f"R² médio={melhor['r2_medio']:.4f})"
     )
-    print(f"\nResultados completos salvos em: {config.BANCO_RESULTADOS}")
-    print(f"CSV resumo salvo em: {caminho_csv}")
-    print(f"Gráficos salvos em: {config.RESULTADOS}")
 
 
 if __name__ == "__main__":

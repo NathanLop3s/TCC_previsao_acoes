@@ -28,7 +28,6 @@ def coletar_dados(ticker: str, periodo: str, destino: Path) -> pd.DataFrame:
 
     caminho_saida = destino / f"{ticker.replace('.', '_')}.parquet"
     df.to_parquet(caminho_saida)
-    logger.info(f"{len(df)} registros salvos em {caminho_saida}")
 
     return df
 
