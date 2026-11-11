@@ -1,0 +1,12 @@
+===== PETR4.SA — ANOVA de dois fatores (variável: RMSE por execução) =====
+                            sum_sq    df         F    PR(>F)
+C(janela)                 0.109907   2.0  9.497258  0.000335
+C(arquitetura)            0.045128   3.0  2.599749  0.062911
+C(janela):C(arquitetura)  0.023948   6.0  0.689803  0.658806
+Residual                  0.277739  48.0       NaN       NaN
+
+Shapiro-Wilk (normalidade dos resíduos): W=0.9755, p=0.2683
+Levene (homogeneidade das variâncias):   W=1.9276, p=0.0589
+
+Tukey HSD (alfa=0.05) — pares com diferença significativa:
+  nenhum par significativo

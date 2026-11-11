@@ -1,0 +1,12 @@
+===== ITUB4.SA — ANOVA de dois fatores (variável: RMSE por execução) =====
+                             sum_sq    df         F    PR(>F)
+C(janela)                  1.342520   2.0  2.343794  0.106854
+C(arquitetura)             2.211315   3.0  2.573701  0.064842
+C(janela):C(arquitetura)   1.330360   6.0  0.774188  0.594084
+Residual                  13.747148  48.0       NaN       NaN
+
+Shapiro-Wilk (normalidade dos resíduos): W=0.9481, p=0.0127
+Levene (homogeneidade das variâncias):   W=0.5604, p=0.8507
+
+Tukey HSD (alfa=0.05) — pares com diferença significativa:
+  nenhum par significativo

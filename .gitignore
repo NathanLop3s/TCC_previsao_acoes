@@ -10,12 +10,8 @@ __pycache__/
 .Python
 *.egg-info/
 
-# Dados e resultados gerados (reproduzíveis rodando o pipeline)
-data/raw/*.parquet
+# Dados processados (reproduzíveis rodando o pipeline)
 data/processed/*.parquet
-results/*.png
-results/*.csv
-resultados.db
 
 # IDE
 .vscode/

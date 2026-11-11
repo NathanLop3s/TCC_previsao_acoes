@@ -14,12 +14,12 @@ def limpar_dados(df: pd.DataFrame) -> pd.DataFrame:
 
 def construir_janelas(
     df: pd.DataFrame, tamanho_janela: int
-) -> tuple[np.ndarray, np.ndarray, pd.DatetimeIndex]:
+) -> tuple[np.ndarray, np.ndarray, pd.DatetimeIndex, np.ndarray]:
     fechamentos = df["Close"].values
     indicadores = df[["SMA_curta", "SMA_longa", "RSI"]].values
     datas = df.index
 
-    X, y, y_datas = [], [], []
+    X, y, y_datas, y_anterior = [], [], [], []
 
     for i in range(tamanho_janela - 1, len(df) - 1):
         janela_precos = fechamentos[i - tamanho_janela + 1 : i + 1]
@@ -29,8 +29,11 @@ def construir_janelas(
         X.append(amostra)
         y.append(fechamentos[i + 1])
         y_datas.append(datas[i + 1])
+        # Fechamento do último dia da janela (dia t): usado na previsão ingênua
+        # (persistência), no MASE e na acurácia direcional.
+        y_anterior.append(fechamentos[i])
 
-    return np.array(X), np.array(y), pd.DatetimeIndex(y_datas)
+    return np.array(X), np.array(y), pd.DatetimeIndex(y_datas), np.array(y_anterior)
 
 
 def preparar_dataset(
@@ -45,11 +48,13 @@ def preparar_dataset(
     df = adicionar_indicadores(df, janela_sma_curta, janela_sma_longa, janela_rsi)
     df = df.dropna()
 
-    X, y, datas_y = construir_janelas(df, tamanho_janela)
+    X, y, datas_y, y_ant = construir_janelas(df, tamanho_janela)
 
     corte = int(len(X) * proporcao_treino)
     X_treino, X_teste = X[:corte], X[corte:]
     y_treino, y_teste = y[:corte], y[corte:]
+    y_ant_treino, y_ant_teste = y_ant[:corte], y_ant[corte:]
+    datas_treino = datas_y[:corte]
     datas_teste = datas_y[corte:]
 
     if len(X_teste) == 0:
@@ -74,4 +79,9 @@ def preparar_dataset(
         "scaler_y": scaler_y,
         "datas_teste": datas_teste,
         "y_teste_original": y_teste,
+        "y_anterior_teste": y_ant_teste,
+        "y_treino_original": y_treino,
+        "y_anterior_treino": y_ant_treino,
+        "periodo_treino": (str(datas_treino.min().date()), str(datas_treino.max().date())),
+        "periodo_teste": (str(datas_teste.min().date()), str(datas_teste.max().date())),
     }

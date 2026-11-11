@@ -1,0 +1,21 @@
+{
+  "ticker": "ITUB4.SA",
+  "fonte": "Yahoo Finance via biblioteca yfinance",
+  "auto_adjust": true,
+  "data_inicio_solicitada": "2021-01-01",
+  "data_fim_solicitada_exclusiva": "2026-01-01",
+  "primeiro_pregao": "2021-01-04",
+  "ultimo_pregao": "2025-12-30",
+  "n_registros_brutos": 1246,
+  "data_hora_coleta": "2026-11-03 20:44:06",
+  "versoes": {
+    "python": "3.13.15",
+    "yfinance": "1.8.0",
+    "pandas": "3.1.0",
+    "numpy": "2.5.4",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
+    "statsmodels": "0.15.0",
+    "scipy": "1.18.1"
+  }
+}
